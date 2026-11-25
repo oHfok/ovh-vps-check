@@ -1,0 +1,29 @@
+name: OVH VPS check
+
+on:
+  schedule:
+    - cron: "*/5 * * * *" # GitHub may delay scheduled runs, often to every 10-20 min
+  workflow_dispatch:
+
+permissions:
+  contents: write # to commit state.txt
+
+concurrency: ovh-check
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 check_ovh.py --state state.txt
+        env:
+          OVH_DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      - name: Save state
+        run: |
+          git add state.txt
+          git diff --cached --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "state: $(tr '\n' ' ' < state.txt)"
+          git push

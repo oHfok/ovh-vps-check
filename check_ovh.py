@@ -100,7 +100,7 @@ def run_ci(a):
 
     if a.webhook:
         if new:
-            ping = a.dc == "WAW"  # @everyone only for the Polish datacenter
+            ping = a.ping or a.dc == "WAW"  # @everyone only for the Polish datacenter (or a ping test)
             discord(a.webhook, alert_payload(a.dc, new, ping))
             for _ in range(2 if ping else 0):  # 3 pings in total
                 time.sleep(1)
@@ -153,6 +153,7 @@ def main():
     p.add_argument("--once", action="store_true", help="check once and exit (local mode)")
     p.add_argument("--webhook", default=os.environ.get("OVH_DISCORD_WEBHOOK"))
     p.add_argument("--state", help="CI mode: JSON file with last availability and the status message id")
+    p.add_argument("--ping", action="store_true", help="CI mode: @everyone even outside Warsaw (for testing)")
     a = p.parse_args()
     run_ci(a) if a.state else run_local(a)
 

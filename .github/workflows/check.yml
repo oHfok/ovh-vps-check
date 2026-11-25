@@ -3,7 +3,12 @@ name: OVH VPS check
 on:
   schedule:
     - cron: "*/5 * * * *" # GitHub may delay scheduled runs, often to every 10-20 min
-  workflow_dispatch:
+  workflow_dispatch: # manual run; inputs allow a test against a datacenter that has stock
+    inputs:
+      dc:
+        default: WAW
+      plans:
+        default: vps-2027-model2 vps-2027-model3
 
 permissions:
   contents: write # to commit state.txt
@@ -16,9 +21,11 @@ jobs:
     timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
-      - run: python3 check_ovh.py --state state.txt
+      - run: python3 check_ovh.py --state state.txt --dc "$DC" --plans $PLANS
         env:
           OVH_DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          DC: ${{ inputs.dc || 'WAW' }}
+          PLANS: ${{ inputs.plans || 'vps-2027-model2 vps-2027-model3' }}
       - name: Save state
         run: |
           git add state.txt

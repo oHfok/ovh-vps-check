@@ -8,6 +8,7 @@ CI:       python check_ovh.py --state state.json
           one check; keeps one Discord status message up to date and sends an alert
           (3x @everyone for Warsaw) only when a plan newly comes in stock.
 Webhook:  --webhook URL or env var OVH_DISCORD_WEBHOOK
+Phone:    env var NTFY_TOPIC: urgent push via the ntfy app when Warsaw gets stock (wakes you up)
 """
 import argparse
 import json
@@ -43,6 +44,14 @@ def discord(webhook, payload, message_id=None):
     req = urllib.request.Request(url, json.dumps(payload).encode(), HEADERS, method="PATCH" if message_id else "POST")
     with urllib.request.urlopen(req, timeout=20) as r:
         return json.load(r)
+
+
+def ntfy(topic, dc, names):
+    """Max-priority push to the ntfy phone app; it can ring through Do Not Disturb."""
+    body = {"topic": topic, "title": f"OVH: wolny VPS ({dc})!", "message": f"{', '.join(names)} – zamawiaj teraz",
+            "priority": 5, "tags": ["rotating_light"], "click": ORDER_PAGE}
+    req = urllib.request.Request("https://ntfy.sh/", json.dumps(body).encode(), HEADERS)
+    urllib.request.urlopen(req, timeout=20).close()
 
 
 def status_payload(dc, statuses):
@@ -98,9 +107,12 @@ def run_ci(a):
     new = [n for n in found if n not in prev]
     found += [n for n, s in statuses.items() if s == "error" and n in prev]  # an API hiccup must not re-alert
 
+    ping = a.ping or a.dc == "WAW"  # @everyone and phone only for the Polish datacenter (or a ping test)
+    if new and ping and a.ntfy:
+        ntfy(a.ntfy, a.dc, new)  # first, so a failure stops the run and the next run retries the whole alert
+        print("ntfy: phone alert sent", flush=True)
     if a.webhook:
         if new:
-            ping = a.ping or a.dc == "WAW"  # @everyone only for the Polish datacenter (or a ping test)
             discord(a.webhook, alert_payload(a.dc, new, ping))
             for _ in range(2 if ping else 0):  # 3 pings in total
                 time.sleep(1)
@@ -152,6 +164,7 @@ def main():
     p.add_argument("--interval", type=float, default=5, help="minutes between checks (local mode)")
     p.add_argument("--once", action="store_true", help="check once and exit (local mode)")
     p.add_argument("--webhook", default=os.environ.get("OVH_DISCORD_WEBHOOK"))
+    p.add_argument("--ntfy", default=os.environ.get("NTFY_TOPIC"), help="ntfy topic for the phone alarm")
     p.add_argument("--state", help="CI mode: JSON file with last availability and the status message id")
     p.add_argument("--ping", action="store_true", help="CI mode: @everyone even outside Warsaw (for testing)")
     a = p.parse_args()

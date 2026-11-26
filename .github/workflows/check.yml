@@ -9,7 +9,7 @@ on:
       dc:
         default: WAW
       plans:
-        default: vps-2027-model2 vps-2027-model3
+        default: vps-2027-model1 vps-2027-model2 vps-2027-model3
       ping:
         description: "@everyone even outside Warsaw (test)"
         type: boolean
@@ -31,7 +31,7 @@ jobs:
           PING: ${{ inputs.ping && '--ping' || '' }}
           OVH_DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           DC: ${{ inputs.dc || 'WAW' }}
-          PLANS: ${{ inputs.plans || 'vps-2027-model2 vps-2027-model3' }}
+          PLANS: ${{ inputs.plans || 'vps-2027-model1 vps-2027-model2 vps-2027-model3' }}
       - name: Save state
         run: |
           git add state.json

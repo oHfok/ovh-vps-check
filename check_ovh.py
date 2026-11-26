@@ -147,7 +147,7 @@ def run_local(a):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--plans", nargs="+", default=["vps-2027-model2", "vps-2027-model3"])
+    p.add_argument("--plans", nargs="+", default=["vps-2027-model1", "vps-2027-model2", "vps-2027-model3"])
     p.add_argument("--dc", default="WAW", help="datacenter code, e.g. WAW, GRA, BHS")
     p.add_argument("--interval", type=float, default=5, help="minutes between checks (local mode)")
     p.add_argument("--once", action="store_true", help="check once and exit (local mode)")

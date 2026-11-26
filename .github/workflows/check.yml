@@ -14,6 +14,10 @@ on:
         description: "@everyone even outside Warsaw (test)"
         type: boolean
         default: false
+      phone_test:
+        description: "Only send a test alarm to the phone (ntfy), no OVH check"
+        type: boolean
+        default: false
 
 permissions:
   contents: write # to commit state.json
@@ -26,9 +30,10 @@ jobs:
     timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
-      - run: python3 check_ovh.py --state state.json --dc "$DC" --plans $PLANS $PING
+      - run: python3 check_ovh.py --state state.json --dc "$DC" --plans $PLANS $PING $PHONE_TEST
         env:
           PING: ${{ inputs.ping && '--ping' || '' }}
+          PHONE_TEST: ${{ inputs.phone_test && '--phone-test' || '' }}
           OVH_DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           DC: ${{ inputs.dc || 'WAW' }}

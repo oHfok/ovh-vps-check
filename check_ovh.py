@@ -167,7 +167,12 @@ def main():
     p.add_argument("--ntfy", default=os.environ.get("NTFY_TOPIC"), help="ntfy topic for the phone alarm")
     p.add_argument("--state", help="CI mode: JSON file with last availability and the status message id")
     p.add_argument("--ping", action="store_true", help="CI mode: @everyone even outside Warsaw (for testing)")
+    p.add_argument("--phone-test", action="store_true", help="only send a test alarm to the phone (checks the NTFY_TOPIC secret)")
     a = p.parse_args()
+    if a.phone_test:
+        if not a.ntfy:
+            raise SystemExit("NTFY_TOPIC is not set")
+        return ntfy(a.ntfy, "TEST", ["Test alarmu"])
     run_ci(a) if a.state else run_local(a)
 
 
